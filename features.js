@@ -23,6 +23,7 @@
   var TL = (D.timeline && D.timeline.events) || [];
   var ERAS = (D.timeline && D.timeline.eras) || [];
   var SAFE_ID = /^[A-Za-z0-9._~-]{1,180}$/;
+  var SOCIAL = D.social !== false;   // false：不要评论、读后感、读者主页、作者后台（纯静态版）
 
   function uid8() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -106,7 +107,7 @@
     catch (e) { return Promise.resolve(null); }
   }
   function initCaps() {
-    Promise.all([use("db"), use("user"), use("downloads"), use("sample")]).then(function (r) {
+    Promise.all([SOCIAL ? use("db") : null, SOCIAL ? use("user") : null, use("downloads"), use("sample")]).then(function (r) {
       C.db = r[0]; C.user = r[1]; C.dl = r[2]; C.sample = r[3];
       if (!C.user) return null;
       return Promise.all([C.user.id().catch(function () { return null; }), C.user.me().catch(function () { return null; })]);
@@ -436,8 +437,9 @@
     p.classList.add("picked");
     var has = L.bm.some(function (b) { return b.ch === n && b.p === pi; });
     var cnt = paraComments(n, pi).length;
-    pm.innerHTML = '<button type="button" data-a="bm">' + (has ? "取消书签" : "书签") + '</button><button type="button" data-a="cm">评论' + (cnt ? " " + cnt : "") +
-      '</button><button type="button" data-a="card">金句卡</button><button type="button" data-a="link">链接</button>';
+    pm.innerHTML = '<button type="button" data-a="bm">' + (has ? "取消书签" : "书签") + "</button>" +
+      (SOCIAL ? '<button type="button" data-a="cm">评论' + (cnt ? " " + cnt : "") + "</button>" : "") +
+      '<button type="button" data-a="card">金句卡</button><button type="button" data-a="link">链接</button>';
     pm.hidden = false;
     pmY = window.scrollY;
     var rc = p.getBoundingClientRect();
@@ -597,6 +599,13 @@
         var img = el("img", { src: cv.toDataURL("image/png"), alt: "金句卡片", class: "card-img" });
         tip.appendChild(img);
       };
+      if (!C.dl && !window.claude && cv.toBlob) {
+        cv.toBlob(function (blob) {
+          var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = fname;
+          document.body.appendChild(a); a.click(); a.remove(); R.toast("已保存");
+        }, "image/png");
+        return;
+      }
       if (!C.dl || !cv.toBlob) { fallback(); return; }
       cv.toBlob(function (blob) {
         C.dl.save({ filename: fname, data: blob }).then(function (r) {
@@ -949,13 +958,13 @@
       sec.appendChild(ol);
       post.appendChild(sec);
     }
-    if (post) {
+    if (post && SOCIAL) {
       var cm = el("section", { class: "cmts", id: "comments", "aria-label": "评论" });
       post.appendChild(cm);
       var sort = R.get("cmSort") || "new";
       addLive(function () { renderChapterComments(cm, n, sort, function (s) { sort = s; R.set("cmSort", s); }); });
     }
-    addLive(function () { paintBubbles(n); });
+    if (SOCIAL) addLive(function () { paintBubbles(n); });
     void c;
   });
 
@@ -1170,7 +1179,7 @@
   /* =====================================================================
    * 读后感
    * ===================================================================== */
-  R.view("reviews", {
+  if (SOCIAL) R.view("reviews", {
     title: "读后感",
     render: function (box) {
       box.innerHTML = '<header class="vw-h"><p class="kicker">' + esc(D.title) + '</p><h1>读后感</h1><p class="lede">读完了，或者读到一半，写几句给后来的人看。每人一篇，可以改。</p></header>';
@@ -1266,8 +1275,8 @@
       box.appendChild(bar);
 
       var pv = el("section", { class: "privacy" });
-      box.appendChild(pv);
-      addLive(function () {
+      if (SOCIAL) box.appendChild(pv);
+      if (SOCIAL) addLive(function () {
         pv.innerHTML = "<h2>公开设置</h2>";
         var st = sharedState();
         if (st !== "ok") { pv.appendChild(el("p", { class: "tip", text: sharedNote() })); if (st === "anon" && AUTH) pv.appendChild(loginBtn()); return; }
@@ -1294,8 +1303,9 @@
 
       var tabs = el("div", { class: "seg big", role: "tablist" });
       var pane = el("div", { class: "pane" });
-      var TAB = [["hl", "划线与批注"], ["bm", "书签"], ["cm", "我的评论"]];
+      var TAB = SOCIAL ? [["hl", "划线与批注"], ["bm", "书签"], ["cm", "我的评论"]] : [["hl", "划线与批注"], ["bm", "书签"]];
       var curTab = R.get("shelfTab") || "hl";
+      if (!SOCIAL && curTab === "cm") curTab = "hl";
       TAB.forEach(function (x) {
         var b = el("button", { type: "button", role: "tab", "aria-selected": x[0] === curTab ? "true" : "false", text: x[1] });
         b.addEventListener("click", function () { curTab = x[0]; R.set("shelfTab", curTab); tabs.querySelectorAll("button").forEach(function (y) { y.setAttribute("aria-selected", y === b ? "true" : "false"); }); drawPane(); });
@@ -1356,7 +1366,7 @@
     }
   });
 
-  R.view("reader", {
+  if (SOCIAL) R.view("reader", {
     title: "读者主页",
     render: function (box, id) {
       addLive(function () {
@@ -1407,7 +1417,7 @@
   /* =====================================================================
    * 作者后台
    * ===================================================================== */
-  R.view("admin", {
+  if (SOCIAL) R.view("admin", {
     title: "作者后台",
     render: function (box, arg) {
       box.innerHTML = '<header class="vw-h"><p class="kicker">' + esc(D.title) + '</p><h1>作者后台</h1><p class="lede">只有作者能看到这一页。阅读统计只包括登录过的读者。</p></header>';
@@ -1545,7 +1555,7 @@
     var links = [];
     if (PEOPLE.length) links.push(["#people", "人物"]);
     if (TL.length) links.push(["#timeline", "时间线"]);
-    links.push(["#reviews", "读后感"]);
+    if (SOCIAL) links.push(["#reviews", "读后感"]);
     links.push(["#shelf", "我的书房"]);
     q.innerHTML = "";
     links.forEach(function (x) { q.appendChild(el("a", { class: "qk", href: x[0], text: x[1] })); });
