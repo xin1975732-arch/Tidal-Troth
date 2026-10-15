@@ -611,5 +611,5 @@
     start: function () { applySize(); applyRead(); applyWave(); route(); }
   };
   // features.js 登记完页面后会调用 Reader.start()；没有 features.js 时自己启动
-  setTimeout(function () { if (!view.firstChild) window.Reader.start(); }, 0);
+  setTimeout(function () { if (!window.READER_WAIT && !view.firstChild) window.Reader.start(); }, 0);
 })();

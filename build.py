@@ -39,6 +39,9 @@ def args():
     global BACKEND, SOCIAL
     if "--no-social" in a:
         a.remove("--no-social"); SOCIAL = False
+    global SPLIT
+    if "--split" in a:
+        a.remove("--split"); SPLIT = True
     if "--backend" in a:
         a.remove("--backend"); BACKEND = True
     if "--core" in a:
@@ -52,6 +55,7 @@ def args():
 
 BACKEND = False
 SOCIAL = True
+SPLIT = False   # --split：每章正文单独放在 chapters/chNN.md，网页打开时读取（可以直接在 GitHub 上改字）
 SUPABASE_JS = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"
 
 
@@ -82,7 +86,7 @@ def parse(md):
             blocks.append({"k": "p", "t": c.replace("\n", "")})
         m = re.match(r"^(第[一二三四五六七八九十百零〇两\d]+章)[\s　]*(.*)$", head)
         title = (m.group(2).strip() if m and m.group(2).strip() else head)
-        chs.append({"head": head, "title": title, "blocks": blocks})
+        chs.append({"head": head, "title": title, "blocks": blocks, "raw": "## " + p.strip() + "\n"})
     return chs
 
 
@@ -259,7 +263,7 @@ def main():
         "toc_note_extra": B.get("toc_note_extra", ""), "gauge": B.get("gauge", ""),
         "total": total, "cover": cover_svg, "end": end_svg,
         "people": people, "timeline": timeline,
-        "chapters": chapters,
+        "chapters": [] if SPLIT else chapters,
     }
 
     cfg = {"key": key, "tones": tone_ids, "light": light, "dark": dark, "head": head_scene, "sound": snd_scene}
@@ -300,6 +304,19 @@ def main():
         gauge = ('<aside class="gauge" aria-hidden="true" hidden>\n  <span class="g-t"><b>%s</b>　%s</span>\n  <span class="g-col"><i></i></span>\n</aside>'
                  % (html.escape(title_book), html.escape(B["gauge"])))
     # 数据里的 </script> 要转义，免得提前结束 script 标签
+    if SPLIT:
+        data["split"] = {
+            "count": N, "era": {str(k): v for k, v in era.items()}, "coda": coda_ch, "italic": italic_cls,
+            "sign": list(sign_pref), "specials": special, "marks": marks,
+            "recaps": {str(c["n"]): c["recap"] for c in chapters if c["recap"]},
+        }
+        os.makedirs(os.path.join(out, "chapters"), exist_ok=True)
+        os.makedirs(os.path.join(out, "data"), exist_ok=True)
+        for f in ("book.json", "characters.json", "timeline.json", "recaps.json", "cover.svg"):
+            if os.path.exists(os.path.join(book_dir, f)):
+                shutil.copy(os.path.join(book_dir, f), os.path.join(out, "data", f))
+        for i, c in enumerate(chs, 1):
+            open(os.path.join(out, "chapters", "ch%02d.md" % i), "w", encoding="utf-8").write(c["raw"])
     data_json = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
 
     index = f"""<title>{html.escape(title_book)}</title>
@@ -329,8 +346,7 @@ def main():
 <script>window.BOOK={json.dumps(cfg, ensure_ascii=False)};</script>
 {'<script src="scene.js"></script>' if has_scene_js else ''}
 {('<script src="' + SUPABASE_JS + '"></script>' + chr(10) + '<script src="config.js"></script>' + chr(10) + '<script src="backend.js"></script>') if BACKEND else ''}
-<script src="reader.js"></script>
-<script src="features.js"></script>
+{'<script src="loader.js"></script>' if SPLIT else '<script src="reader.js"></script>' + chr(10) + '<script src="features.js"></script>'}
 """
     if standalone:
         index = ('<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n'
@@ -348,7 +364,7 @@ def main():
                 % (c["cn"], html.escape(c["title"]), html.escape(title_book), c["n"], c["n"], c["cn"], html.escape(c["title"])))
         open(os.path.join(out, "ch%02d.html" % c["n"]), "w", encoding="utf-8").write(stub)
 
-    for f in ("reader.css", "reader.js", "features.css", "features.js"):
+    for f in ("reader.css", "reader.js", "features.css", "features.js") + (("loader.js",) if SPLIT else ()):
         shutil.copy(os.path.join(core, f), os.path.join(out, f))
     shutil.copy(os.path.join(book_dir, "theme.css"), os.path.join(out, "theme.css"))
     if has_scene_js:
