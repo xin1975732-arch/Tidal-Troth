@@ -105,8 +105,12 @@
     });
   }
   function pad(n) { return (n < 10 ? "0" : "") + n; }
-  function get(f, type) {
+  function get1(f, type) {
     return fetch(f, { cache: "no-cache" }).then(function (r) { if (!r.ok) throw new Error(f); return type === "json" ? r.json() : r.text(); });
+  }
+  // 先找 chapters/ 或 data/ 文件夹里的；网页上传时文件夹被拆平了的话，就在根目录找同名文件
+  function get(f, type) {
+    return get1(f, type).catch(function (e) { var b = f.split("/").pop(); if (b === f) throw e; return get1(b, type); });
   }
   function opt(f, type) { return get(f, type).catch(function (e) { if (window.console) console.warn("没读到 " + f + "，用网页里原来的那份。", e); return null; }); }
   // data/ 里的几个文件可以直接在 GitHub 上改；没读到（或格式写错）就用网页里原来的那份
