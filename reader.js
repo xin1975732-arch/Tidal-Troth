@@ -440,6 +440,16 @@
     var total = D.total >= 10000 ? (D.total / 10000).toFixed(1) + "万" : String(D.total);
     var epi = D.epigraph ? '<figure class="epi"><blockquote>' + D.epigraph.html + "</blockquote><figcaption>" + esc(D.epigraph.cite || "") + "</figcaption></figure>" : "";
     var series = D.series ? '<p class="series">' + esc(D.series + (D.series_no ? " · " + D.series_no : "")) + "</p>" : "";
+    var sn = D.series_nav || [];
+    if (D.series && sn.length) {
+      series = '<nav class="series series-top" aria-label="' + esc(D.series) + '"><span class="st-l">' + esc(D.series) + "</span>" +
+        sn.map(function (b, i) {
+          var no = "第" + "一二三四五六七八九"[i] + "部";
+          if (b.state === "current") return '<b class="st-b cur" aria-current="page" title="' + no + '">' + esc(b.title) + "</b>";
+          if (!b.url) return '<span class="st-b soon" title="' + no + '，即将上线">' + esc(b.title) + "</span>";
+          return '<a class="st-b" href="' + esc(b.url) + '" title="' + no + '《' + esc(b.title) + '》">' + esc(b.title) + "</a>";
+        }).join('<i class="st-dot" aria-hidden="true">·</i>') + "</nav>";
+    }
     el.innerHTML =
       '<section class="hero"><div class="hero-in">' + (D.cover ? '<div class="cover">' + D.cover + "</div>" : "") +
       '<div class="hero-text">' + series + '<h1 class="wordmark">' + esc(D.title) + "</h1>" + epi +
