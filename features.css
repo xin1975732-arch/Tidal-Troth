@@ -345,3 +345,6 @@ a.sn-b:hover { background: var(--hi); }
   .sheet { animation: none; }
   .text [data-p].flash { animation: none; outline: 3px solid var(--hi); }
 }
+
+/* 封面底部声明 */
+.disclaim { max-width: 40em; margin: -24px auto 0; padding: 0 16px 48px; text-align: center; font-size: 12px; line-height: 2; letter-spacing: .08em; color: var(--ink-3); opacity: .75; }
