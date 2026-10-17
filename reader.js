@@ -453,10 +453,10 @@
     el.innerHTML =
       '<section class="hero"><div class="hero-in">' + (D.cover ? '<div class="cover">' + D.cover + "</div>" : "") +
       '<div class="hero-text">' + series + '<h1 class="wordmark">' + esc(D.title) + "</h1>" + epi +
-      '<p class="blurb">' + esc(D.blurb) + "</p>" +
       '<div class="cta"><a class="btn btn-primary" id="go" href="#ch01">开始阅读</a><a class="btn btn-ghost" id="again" href="#ch01" hidden>从头读起</a><a class="btn btn-ghost" href="#mulu">目录</a></div>' +
       '<div class="quick" data-slot="home-links"></div>' +
       "</div></div></section>" +
+      '<section class="intro" aria-label="简介"><p class="intro-k">明州·潮江·中篇小说</p><p class="blurb">' + esc(D.blurb) + "</p></section>" +
       '<section class="mulu" id="mulu" aria-labelledby="mulu-h"><h2 id="mulu-h">目录</h2><ol class="toc" style="--rows:' + Math.ceil(N / 2) + '">' + toc + "</ol>" +
       '<p class="mulu-note">全书' + toCn(N) + "章，约" + total + "字。" + legend + (D.toc_note_extra ? "<br>" + esc(D.toc_note_extra) : "") + "</p></section>" +
       footer() +
