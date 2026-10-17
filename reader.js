@@ -460,7 +460,7 @@
       '<section class="mulu" id="mulu" aria-labelledby="mulu-h"><h2 id="mulu-h">目录</h2><ol class="toc" style="--rows:' + Math.ceil(N / 2) + '">' + toc + "</ol>" +
       '<p class="mulu-note">全书' + toCn(N) + "章，约" + total + "字。" + legend + (D.toc_note_extra ? "<br>" + esc(D.toc_note_extra) : "") + "</p></section>" +
       footer() +
-      '<p class="disclaim">书中人事，俱属虚构。<br>作者构思，Claude执笔相助。</p>';
+      '<p class="disclaim">作者立账，Claude记账。<br>账可对，人莫对号。</p>';
     var last = parseInt(get("last") || "0", 10);
     var go = el.querySelector("#go"), again = el.querySelector("#again");
     if (last >= 1 && last <= N) {
