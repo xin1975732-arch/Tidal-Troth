@@ -134,5 +134,5 @@
 
 /* 封面与目录之间的简介：沿用本书字号、字色和阅读底色 */
 .intro { max-width: 40em; margin: 0 auto; padding: 48px 16px 0; display: grid; justify-items: center; gap: 20px; }
-.intro-k { margin: 0; font-family: var(--sans); font-size: 13px; letter-spacing: .32em; text-indent: .32em; color: var(--ink-3); }
-.intro .blurb { text-align: justify; text-align-last: left; }
+.intro-k { margin: 0; font-family: var(--sans); font-size: 15px; letter-spacing: .32em; text-indent: .32em; color: var(--ink-3); }
+.intro .blurb { font-size: 17px; text-align: justify; text-align-last: left; }
