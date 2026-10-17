@@ -650,6 +650,32 @@ canvas.scene {
   font-size: 13px;
   letter-spacing: .3em;
 }
+.series-top {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 3px 4px 3px 14px;
+  letter-spacing: 0;
+}
+.st-l { margin-right: 6px; letter-spacing: .3em; }
+.st-dot { font-style: normal; opacity: .45; }
+.st-b {
+  padding: 3px 9px 3px 11px;
+  border-radius: 999px;
+  color: inherit;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 15px;
+  letter-spacing: .12em;
+  text-decoration: none;
+  transition: background .15s, color .15s;
+}
+a.st-b { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); }
+a.st-b:hover, a.st-b:focus-visible { background: var(--paper); text-decoration-color: currentColor; }
+.st-b.cur { background: var(--acc); color: var(--on-acc); }
+.st-b.soon { opacity: .5; }
 .wordmark {
   margin: 0;
   font-family: var(--display);
