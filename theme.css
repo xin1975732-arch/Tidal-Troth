@@ -113,13 +113,15 @@
 @keyframes drift { from { transform: translateX(0); } to { transform: translateX(-30px); } }
 @keyframes bob { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(3px) rotate(1.5deg); } }
 
-/* 英文书名：小字，退在中文书名下面 */
+/* 英文书名：小字，退在中文书名下面，居中对着中文书名 */
+.wordmark { width: fit-content; }
 .wordmark::after {
   content: "Tidal Troth";
   display: block;
+  text-align: center;
   margin-top: 18px;
   font-family: "Cormorant Garamond", "EB Garamond", Georgia, "Times New Roman", serif;
-  font-size: 18px; font-style: italic; font-weight: 400; line-height: 1.2;
+  font-size: 24px; font-style: italic; font-weight: 400; line-height: 1.2;
   letter-spacing: .08em; text-indent: .08em;
   color: var(--ink-2, var(--ink)); opacity: .75; text-shadow: none;
 }
