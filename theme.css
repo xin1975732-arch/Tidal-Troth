@@ -125,3 +125,9 @@
   letter-spacing: .08em; text-indent: .08em;
   color: var(--ink-2, var(--ink)); opacity: .75; text-shadow: none;
 }
+
+/* 电脑上：书名、英文名、题记都对着中轴居中，跟手机一致 */
+@media (min-width: 860px) {
+  .hero-text { justify-items: center; text-align: center; }
+  .hero-text .cta, .hero-text .quick { justify-content: center; }
+}
