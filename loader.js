@@ -141,7 +141,7 @@
     D.total = D.chapters.reduce(function (s, c) { return s + c.chars; }, 0);
     box.textContent = JSON.stringify(D);
     window.READER_WAIT = true;   // 等 features.js 加载完再启动
-    return load("reader.js");
+    return load("reader.js?v=flow1");
   }).then(function () { return load("features.js"); }).catch(function (e) {
     var v = document.getElementById("view");
     if (v) v.innerHTML = '<p style="padding:40px 20px;text-align:center">正文没有加载出来（' + String(e && e.message || e) + '）。请刷新一下；如果是直接双击打开的本地文件，需要放到网站上才能读取。</p>';
