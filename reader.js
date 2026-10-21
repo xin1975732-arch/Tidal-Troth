@@ -280,6 +280,10 @@
   function openFlow(open) {
     if (!flowPop) return;
     if (open) openPanel(false);
+    if (!open && flowPop.classList.contains("first")) {
+      if (get("flow") == null) set("flow", flow);
+      setTimeout(function () { flowPop.classList.remove("first"); }, 280);
+    }
     flowPop.classList.toggle("on", open);
     flowBtn.setAttribute("aria-expanded", open ? "true" : "false");
   }
@@ -307,7 +311,8 @@
     };
     flowPop = el("div", { class: "flow-pop", id: "flowPop", role: "dialog", "aria-label": "阅读模式" },
       '<span class="set-label">阅读模式</span><div class="flow-opts" role="radiogroup" aria-label="阅读模式">' +
-      opt("x", "左右翻页", "一页一页，像翻书") + opt("y", "上下滚动", "一路往下读") + "</div>");
+      opt("x", "左右翻页", "一页一页，像翻书") + opt("y", "上下滚动", "一路往下读") + "</div>" +
+      '<p class="flow-tip">以后想换，点顶栏这个图标</p>');
     app.insertBefore(flowPop, view);
     flowBtn.addEventListener("click", function (e) { e.stopPropagation(); openFlow(!flowPop.classList.contains("on")); });
     flowPop.addEventListener("click", function (e) { e.stopPropagation(); });
@@ -701,7 +706,9 @@
     current: function () { return cur; },
     maxRead: maxRead,
     scrollToPara: scrollToPara,
-    start: function () { applySize(); applyRead(); applyWave(); applyFlow(); route(); }
+    start: function () { applySize(); applyRead(); applyWave(); applyFlow(); route();
+      if (flowPop && flowMq.matches && get("flow") == null) { flowPop.classList.add("first"); setTimeout(function () { openFlow(true); }, 400); }
+    }
   };
   // features.js 登记完页面后会调用 Reader.start()；没有 features.js 时自己启动
   setTimeout(function () { if (!window.READER_WAIT && !view.firstChild) window.Reader.start(); }, 0);
