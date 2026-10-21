@@ -826,3 +826,108 @@ a.st-b:hover, a.st-b:focus-visible { background: var(--paper); text-decoration-c
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
+
+/* ---------- 手机端阅读模式：左右翻页 / 上下滚动（只在 600px 以下出现，桌面不受影响） ---------- */
+.flow-tool, .flow-pop { display: none; }
+@media (max-width: 600px) {
+  .flow-tool { display: inline-flex; }
+  .flow-pop {
+    position: fixed;
+    z-index: 40;
+    top: calc(env(safe-area-inset-top, 0px) + var(--bar-h) + 8px);
+    right: 12px;
+    width: min(320px, calc(100vw - 24px));
+    padding: 16px 16px 14px;
+    display: block;
+    background: var(--panel);
+    color: var(--ink);
+    border: 2px solid var(--hard);
+    border-radius: 18px;
+    box-shadow: 5px 5px 0 var(--hard);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px) scale(.96);
+    transform-origin: 80% 0;
+    transition: opacity .2s ease, transform .26s cubic-bezier(.2, .9, .3, 1.2), visibility 0s linear .26s;
+  }
+  .flow-pop.on { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
+  .flow-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .flow-opt {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    padding: 14px 8px 12px;
+    border: 1.5px solid var(--rule);
+    border-radius: 14px;
+    background: var(--bg);
+    color: var(--ink-2);
+    text-align: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color .2s ease, background-color .2s ease, box-shadow .2s ease, transform .15s ease;
+  }
+  .flow-opt:active { transform: scale(.97); }
+  .flow-opt svg { width: 40px; height: 40px; color: var(--ink-3); transition: color .2s ease, transform .3s ease; }
+  .flow-opt b { font-weight: 600; font-size: 15px; letter-spacing: .12em; color: var(--ink); }
+  .flow-opt small { font-size: 11px; letter-spacing: .04em; color: var(--ink-3); }
+  .flow-opt::after {
+    content: "";
+    position: absolute;
+    top: 9px; right: 9px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--acc);
+    transform: scale(0);
+    transition: transform .2s ease;
+  }
+  .flow-opt[aria-checked="true"] {
+    border-color: var(--acc);
+    background: var(--paper);
+    box-shadow: inset 0 0 0 1.5px var(--acc), 3px 3px 0 var(--hard);
+  }
+  .flow-opt[aria-checked="true"] svg { color: var(--acc); }
+  .flow-opt[aria-checked="true"][data-flow="x"] svg { transform: translateX(2px); }
+  .flow-opt[aria-checked="true"][data-flow="y"] svg { transform: translateY(2px); }
+  .flow-opt[aria-checked="true"]::after { transform: scale(1); }
+
+  /* 左右翻页：正文分栏，每栏一屏宽，横向吸附 */
+  :root[data-flow="x"]:has(#app[data-view="chapter"]) { overflow: hidden; overscroll-behavior: none; }
+  :root[data-flow="x"] #app[data-view="chapter"] #view {
+    position: fixed;
+    inset: 0;
+    padding: calc(env(safe-area-inset-top, 0px) + var(--bar-h)) 20px env(safe-area-inset-bottom, 0px);
+    column-width: calc(100vw - 40px);
+    column-gap: 40px;
+    column-fill: auto;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  :root[data-flow="x"] #app[data-view="chapter"] #view::-webkit-scrollbar { display: none; }
+  :root[data-flow="x"] #app[data-view="chapter"] .text { padding-inline: 0; }
+  :root[data-flow="x"] #app[data-view="chapter"] :is(.ch-head, .ch-end, .ch-nav a, .brk) { break-inside: avoid; }
+  :root[data-flow="x"] #app[data-view="chapter"] .ch-nav { padding: 0 0 24px; }
+  .flow-snap {
+    position: absolute;
+    top: 0;
+    height: 1px;
+    pointer-events: none;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+  /* 顶栏不再压在章首上：翻页时一律用实底 */
+  :root[data-flow="x"] #app[data-view="chapter"] .bar.over {
+    background: var(--bar);
+    border-color: var(--rule);
+    -webkit-backdrop-filter: blur(10px) saturate(1.2);
+    backdrop-filter: blur(10px) saturate(1.2);
+    color: var(--ink);
+  }
+  :root[data-flow="x"] #app[data-view="chapter"] .bar.over .bar-prog { opacity: 1; }
+  :root[data-flow="x"] #app[data-view="chapter"] .bar.over .tool[aria-pressed="true"],
+  :root[data-flow="x"] #app[data-view="chapter"] .bar.over .tool[aria-expanded="true"] { color: var(--on-acc); background: var(--acc); border-color: var(--acc); }
+}
