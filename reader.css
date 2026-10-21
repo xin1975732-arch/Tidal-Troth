@@ -851,6 +851,19 @@ a.st-b:hover, a.st-b:focus-visible { background: var(--paper); text-decoration-c
     transition: opacity .2s ease, transform .26s cubic-bezier(.2, .9, .3, 1.2), visibility 0s linear .26s;
   }
   .flow-pop.on { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
+  /* 第一次进来：居中弹出，背后压暗 */
+  .flow-pop.first {
+    top: 50%; left: 50%; right: auto;
+    width: min(340px, calc(100vw - 32px));
+    padding: 22px 18px 16px;
+    transform: translate(-50%, -44%) scale(.96);
+    transform-origin: 50% 50%;
+    box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .42), 5px 5px 0 var(--hard);
+  }
+  .flow-pop.first.on { transform: translate(-50%, -50%); }
+  .flow-pop.first .set-label { margin-bottom: 14px; text-align: center; font-size: 15px; letter-spacing: .4em; text-indent: .4em; color: var(--ink); }
+  .flow-tip { display: none; margin: 12px 0 0; text-align: center; font-size: 12px; letter-spacing: .04em; color: var(--ink-3); }
+  .flow-pop.first .flow-tip { display: block; }
   .flow-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .flow-opt {
     position: relative;
@@ -909,6 +922,19 @@ a.st-b:hover, a.st-b:focus-visible { background: var(--paper); text-decoration-c
   }
   :root[data-flow="x"] #app[data-view="chapter"] #view::-webkit-scrollbar { display: none; }
   :root[data-flow="x"] #app[data-view="chapter"] .text { padding-inline: 0; }
+  :root[data-flow="x"] #app[data-view="chapter"] .text > * { break-inside: avoid; orphans: 3; widows: 3; }
+  /* 翻页时章首只留标题，不要画面 */
+  :root[data-flow="x"] #app[data-view="chapter"] .ch-head {
+    min-height: clamp(300px, 46vh, 420px);
+    background: none;
+    color: var(--ink);
+  }
+  :root[data-flow="x"] #app[data-view="chapter"] .ch-head canvas.scene,
+  :root[data-flow="x"] #app[data-view="chapter"] .ch-head::before,
+  :root[data-flow="x"] #app[data-view="chapter"] .ch-head::after { display: none; }
+  :root[data-flow="x"] #app[data-view="chapter"] .ch-head :is(.ch-no, .ch-title) { color: var(--ink); text-shadow: none; }
+  :root[data-flow="x"] #app[data-view="chapter"] .ch-head .ch-no { color: var(--ink-3); }
+  :root[data-flow="x"] #app[data-view="chapter"] .ch-meta { color: var(--ink-3); }
   :root[data-flow="x"] #app[data-view="chapter"] :is(.ch-head, .ch-end, .ch-nav a, .brk) { break-inside: avoid; }
   :root[data-flow="x"] #app[data-view="chapter"] .ch-nav { padding: 0 0 24px; }
   .flow-snap {
