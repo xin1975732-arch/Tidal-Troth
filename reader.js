@@ -260,6 +260,76 @@
     if (ws) ws.addEventListener("click", function () { waveOn = !waveOn; set("wave", waveOn ? "on" : "off"); applyWave(); });
   }
 
+  /* ---------- 手机端阅读模式：x 左右翻页 / y 上下滚动（默认，沿用原逻辑） ---------- */
+  var flowMq = window.matchMedia("(max-width: 600px)");
+  var flow = get("flow") === "x" ? "x" : "y";
+  var flowBtn = null, flowPop = null, snaps = 0;
+  var FLOW_ICON = {
+    x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="8" height="14" rx="1.5"/><rect x="13" y="5" width="8" height="14" rx="1.5"/><path d="M5.5 9h3M5.5 12h3M15.5 9h3M15.5 12h3"/></svg>',
+    y: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="1.5"/><path d="M9 7h6M9 10h6M9 13h4"/><path d="M12 15.5v3.5M10.2 17.4L12 19.2l1.8-1.8"/></svg>'
+  };
+  function paged() { return flow === "x" && flowMq.matches && cur.name === "chapter"; }
+  function paginate() {
+    view.querySelectorAll(".flow-snap").forEach(function (s) { s.parentNode.removeChild(s); });
+    snaps = 0;
+    if (!paged()) return;
+    var w = view.clientWidth;
+    snaps = Math.max(1, Math.ceil(view.scrollWidth / w - 0.02));
+    for (var i = 0; i < snaps; i++) view.appendChild(el("i", { class: "flow-snap", "aria-hidden": "true", style: "left:" + i * w + "px;width:" + w + "px" }));
+  }
+  function openFlow(open) {
+    if (!flowPop) return;
+    if (open) openPanel(false);
+    flowPop.classList.toggle("on", open);
+    flowBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+  function applyFlow() {
+    if (flow === "x") root.setAttribute("data-flow", "x"); else root.removeAttribute("data-flow");
+    if (flowBtn) flowBtn.innerHTML = FLOW_ICON[flow];
+    if (flowPop) flowPop.querySelectorAll(".flow-opt").forEach(function (b) {
+      b.setAttribute("aria-checked", b.getAttribute("data-flow") === flow ? "true" : "false");
+    });
+    paginate();
+  }
+  function setFlow(v) {
+    if (v !== flow) {
+      var ratio = cur.ch ? progress() : 0;
+      flow = v; set("flow", v); applyFlow();
+      if (cur.ch) restore(ratio);
+    }
+    setTimeout(function () { openFlow(false); }, 200);
+  }
+  if (aa && aa.parentNode) {
+    flowBtn = el("button", { class: "tool flow-tool", id: "flowBtn", type: "button", "aria-expanded": "false", "aria-controls": "flowPop", "aria-label": "阅读模式" });
+    aa.parentNode.insertBefore(flowBtn, aa);
+    var opt = function (v, t, d) {
+      return '<button class="flow-opt" type="button" role="radio" aria-checked="false" data-flow="' + v + '">' + FLOW_ICON[v] + "<b>" + t + "</b><small>" + d + "</small></button>";
+    };
+    flowPop = el("div", { class: "flow-pop", id: "flowPop", role: "dialog", "aria-label": "阅读模式" },
+      '<span class="set-label">阅读模式</span><div class="flow-opts" role="radiogroup" aria-label="阅读模式">' +
+      opt("x", "左右翻页", "一页一页，像翻书") + opt("y", "上下滚动", "一路往下读") + "</div>");
+    app.insertBefore(flowPop, view);
+    flowBtn.addEventListener("click", function (e) { e.stopPropagation(); openFlow(!flowPop.classList.contains("on")); });
+    flowPop.addEventListener("click", function (e) { e.stopPropagation(); });
+    flowPop.querySelectorAll(".flow-opt").forEach(function (b) {
+      b.addEventListener("click", function () { setFlow(b.getAttribute("data-flow")); });
+    });
+    aa.addEventListener("click", function () { openFlow(false); });
+    document.addEventListener("click", function () { openFlow(false); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && flowPop.classList.contains("on")) { openFlow(false); flowBtn.focus(); } });
+  }
+  view.addEventListener("scroll", function () {
+    if (!paged()) return;
+    if (view.scrollWidth > snaps * view.clientWidth + 1) paginate();
+    onScroll();
+  }, { passive: true });
+  var flowT;
+  window.addEventListener("resize", function () {
+    clearTimeout(flowT);
+    flowT = setTimeout(function () { if (paged()) restore(progress()); else paginate(); }, 160);
+  });
+  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", function () { if (paged()) paginate(); });
+
   /* ---------- 章首动画：每次换页重新挂到新的画布上 ---------- */
   var Head = (function () {
     var list = [];
@@ -372,6 +442,7 @@
 
   /* ---------- 进度 ---------- */
   function progress() {
+    if (paged()) { var m = view.scrollWidth - view.clientWidth; return m > 0 ? Math.min(1, Math.max(0, view.scrollLeft / m)) : 1; }
     var a = view.querySelector("article.text");
     if (!a) return 0;
     var top = a.getBoundingClientRect().top + window.scrollY - window.innerHeight * 0.3;
@@ -380,6 +451,7 @@
     return Math.min(1, Math.max(0, (window.scrollY - top) / span));
   }
   function restore(ratio) {
+    if (paged()) { paginate(); var w = view.clientWidth; view.scrollLeft = Math.round(ratio * (view.scrollWidth - w) / w) * w; return; }
     var a = view.querySelector("article.text");
     if (!a) return;
     var top = a.getBoundingClientRect().top + window.scrollY - window.innerHeight * 0.3;
@@ -522,6 +594,13 @@
   function scrollToPara(p) {
     var node = view.querySelector('article.text [data-p="' + p + '"]');
     if (!node) return false;
+    if (paged()) {
+      paginate();
+      var w = view.clientWidth;
+      view.scrollLeft = Math.floor((node.getBoundingClientRect().left - view.getBoundingClientRect().left + view.scrollLeft) / w) * w;
+      flash(node);
+      return true;
+    }
     var y = node.getBoundingClientRect().top + window.scrollY - (bar ? bar.offsetHeight : 0) - window.innerHeight * 0.18;
     window.scrollTo(0, Math.max(0, y));
     flash(node);
@@ -577,12 +656,15 @@
       emit("chapter", r.ch, view, r.p);
       var doResume = flags.resume; flags.resume = false;
       var after = function () {
+        paginate();
         if (r.p != null) { if (!scrollToPara(r.p)) window.scrollTo(0, 0); }
         else if (doResume) { var s = parseFloat(get("pos." + r.ch) || "0"); if (s > 0.01) restore(s); else window.scrollTo(0, 0); }
         else window.scrollTo(0, 0);
         onScroll();
       };
       window.scrollTo(0, 0);
+      view.scrollLeft = 0;
+      paginate();
       if ((r.p != null || doResume) && document.fonts && document.fonts.ready) document.fonts.ready.then(function () { setTimeout(after, 30); });
       else after();
       return;
@@ -619,7 +701,7 @@
     current: function () { return cur; },
     maxRead: maxRead,
     scrollToPara: scrollToPara,
-    start: function () { applySize(); applyRead(); applyWave(); route(); }
+    start: function () { applySize(); applyRead(); applyWave(); applyFlow(); route(); }
   };
   // features.js 登记完页面后会调用 Reader.start()；没有 features.js 时自己启动
   setTimeout(function () { if (!window.READER_WAIT && !view.firstChild) window.Reader.start(); }, 0);
